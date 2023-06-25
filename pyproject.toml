@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "dotp"
+version = "0.1.0"
+description = "Open machine-machine communication in Python."
+authors = ["VincentRPS <vincentbusiness55@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+anyio = "^3.7.0"
+msgspec = "^0.16.0"
+ulid-py = "^1.1.0"
+
+[tool.poetry.group.dev.dependencies]
+isort = "^5.12.0"
+black = "^23.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
