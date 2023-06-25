@@ -72,7 +72,7 @@ class Server:
                 for pid in self.home_pids:
                     if dpid["vid"] == pid.visible_id:
                         resp = await pid.isolate.call(
-                            call["func"], None, *call["args"], **call["kwargs"]
+                            dpid["vid"], call["func"], *call["args"], **call["kwargs"]
                         )
                         await client.send(
                             msgspec.msgpack.encode(
@@ -80,6 +80,8 @@ class Server:
                             )
                         )
                         break
+
+            # OP 2: isolate response
             case 2:
                 message_id = d["id"]
                 resp = d["cr"]

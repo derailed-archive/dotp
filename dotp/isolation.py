@@ -32,22 +32,46 @@ import ulid
 from .pid import IP, PID
 from .server import server
 
+isolates: dict[str, "Isolate"] = {}
+
 
 class Isolate:
     """A class for isolated OTP processes."""
 
     def __init__(self) -> None:
         self.pid = PID(ulid.new().hex, IP, self)
+        isolates[self.pid.visible_id] = self
+        server.home_pids.append(self.pid)
+        server.pids.append(self.pid)
         asyncio.create_task(self.new())
 
     async def new(self) -> None:
         ...
 
     @classmethod
+    async def stop(cls, pid: PID | str) -> None:
+        if isinstance(pid, str):
+            self = isolates[pid]
+
+            isolates.pop(self.pid.visible_id)
+            server.home_pids.remove(self.pid)
+            server.pids.remove(self.pid)
+
+            for fs in server.foreign_servers:
+                await fs.send({"op": 3, "d": self.pid.packed})
+        else:
+            for fs in server.foreign_servers:
+                if fs.ip == pid.machine_ip:
+                    await fs.send({"op": 4, "d": pid.packed})
+                    break
+            else:
+                raise ValueError("Isolate does not exist")
+
+    @classmethod
     async def call(
-        self, func: str, pid: PID | None = None, timeout: int = 15, *args, **kwargs
+        cls, pid: PID | str, func: str, timeout: int = 15, *args, **kwargs
     ) -> Any:
-        if pid:
+        if isinstance(pid, PID):
             for fs in server.foreign_servers:
                 if fs.ip == pid.machine_ip:
                     message_id = ulid.new().hex
@@ -64,9 +88,11 @@ class Isolate:
                     )
                     return await asyncio.wait_for(future, timeout)
         else:
-            fnc = getattr(func)
+            isolate = isolates[pid]
+
+            fnc = getattr(isolate, func)
 
             if isfunction(fnc):
-                return fnc(*args, **kwargs)
+                return await fnc(*args, **kwargs)
             else:
                 return fnc
