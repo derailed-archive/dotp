@@ -43,12 +43,15 @@ class PID:
     ) -> None:
         self.visible_id = visible_id
         self.machine_ip = machine_ip
-        self.packed = msgspec.msgpack.encode(
-            {"vid": visible_id, "ip": b85encode(machine_ip)}
-        )
+        self.d = {"vid": visible_id, "ip": b85encode(machine_ip)}
+        self.packed = msgspec.msgpack.encode(self.d)
         self.isolate = isolate
 
     @classmethod
     def decode(cls, data: Any) -> Self:
         unpacked = msgspec.msgpack.decode(data)
         return cls(unpacked["vid"], b85decode(unpacked["ip"]))
+
+    @classmethod
+    def decode_bulk(cls, data: list[dict[str, Any]]) -> None:
+        return [cls(d["vid"], b85decode(d["ip"])) for d in data]

@@ -42,10 +42,12 @@ class Isolate:
         self.pid = PID(ulid.new().hex, IP, self)
         isolates[self.pid.visible_id] = self
         server.home_pids.append(self.pid)
-        server.pids.append(self.pid)
         asyncio.create_task(self.new())
 
     async def new(self) -> None:
+        ...
+
+    async def receive(self, *args, **kwargs) -> None:
         ...
 
     @classmethod
